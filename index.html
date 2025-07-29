@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 자리 배치</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Increased border radius for more rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            position: relative;
+            flex-direction: column;
+        }
+        .header-panel {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .main-content-panels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            width: 100%;
+        }
+        .control-panel, .settings-panel {
+            flex: 1;
+            min-width: 300px;
+            padding: 1.5rem;
+            background-color: #f8fafc;
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+        .classroom-layout-container {
+            flex: 2;
+            min-width: 400px;
+            padding: 1.5rem;
+            background-color: #f8fafc;
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative; /* Added for overlay positioning */
+        }
+        .classroom-layout-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .classroom-layout {
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem;
+            background-color: #e2e8f0;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .desk {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.1s ease, border 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+            cursor: default;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            font-size: 0.9rem;
+            padding: 5px;
+            word-break: keep-all;
+            position: relative; /* For the delete button */
+        }
+        .desk .desk-number {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            color: rgba(255,255,255,0.8);
+        }
+        .desk .student-name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        .desk .student-gender {
+            font-size: 0.75rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        /* Desk type colors */
+        .desk-type-random { background-color: #facc15; } /* Yellow */
+        .desk-type-male { background-color: #3b82f6; }   /* Blue */
+        .desk-type-female { background-color: #ec4899; } /* Pink */
+        
+        /* Specific colors when occupied based on student gender */
+        .desk.occupied.student-gender-male { background-color: #2563eb; } /* Darker blue for male */
+        .desk.occupied.student-gender-female { background-color: #db2777; } /* Darker pink for female */
+        .desk.occupied.student-gender-unknown { background-color: #d97706; } /* Darker yellow/orange for unknown */
+
+        /* Desk inactive (deleted) state */
+        .desk.inactive {
+            background-color: #e2e8f0; /* Light grey */
+            color: #94a3b8; /* Darker grey text */
+            opacity: 0.7;
+            cursor: not-allowed;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); /* Inset shadow */
+        }
+        .desk.inactive .student-name,
+        .desk.inactive .student-gender {
+            display: none; /* Hide student name/gender when inactive */
+        }
+
+        /* Highlight for preference setting (click desk first) */
+        .desk.preference-focused {
+            border: 2px solid #22c55e; /* Green border for preference focus */
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.5); /* Green glow */
+        }
+        
+        .desk.dragging {
+            opacity: 0.5;
+            border: 2px dashed #3b82f6;
+            cursor: grabbing;
+        }
+        .desk.drag-over {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px #4f46e5;
+        }
+        .desk:hover:not(.dragging):not(.inactive) { /* Hover effect only if not dragging and not inactive */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Delete button on desk */
+        .desk-delete-btn {
+            position: absolute;
+            top: -8px; /* Slightly outside for visibility */
+            right: -8px; /* Slightly outside for visibility */
+            background-color: #ef4444; /* Red */
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #b91c1c;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s ease, background-color 0.1s ease;
+            opacity: 0; /* Hidden by default */
+            visibility: hidden; /* Hidden by default */
+            z-index: 10; /* Above student name */
+        }
+        .desk:hover .desk-delete-btn {
+            opacity: 1; /* Visible on desk hover */
+            visibility: visible;
+            transform: scale(1.1);
+        }
+        .desk-delete-btn:hover {
+            background-color: #dc2626; /* Darker red on hover */
+            transform: scale(1.2) rotate(15deg);
+        }
+        .desk-delete-btn:active {
+            transform: scale(1.0);
+        }
+
+        /* Input & Button Styles (mostly Tailwind defaults, adapted for rounded and shadows) */
+        input[type="number"],
+        textarea,
+        input[type="text"] {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            width: 100%;
+            background-color: #fefefe;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input[type="number"]:focus,
+        textarea:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-image: linear-gradient(to right, #6366f1, #3b82f6);
+            color: white;
+            border: none;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            background-image: linear-gradient(to right, #4f46e5, #2563eb);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary {
+            background-image: linear-gradient(to right, #cbd5e1, #94a3b8);
+        }
+        .btn-secondary:hover {
+            background-image: linear-gradient(to right, #a0aec0, #718096);
+        }
+        .btn-add-student {
+            background-image: linear-gradient(to right, #22c55e, #16a34a); /* Green gradient */
+        }
+        .btn-add-student:hover {
+            background-image: linear-gradient(to right, #16a34a, #15803d);
+        }
+        .btn-delete-student {
+            background-image: linear-gradient(to right, #ef4444, #dc2626); /* Red gradient */
+        }
+        .btn-delete-student:hover {
+            background-image: linear-gradient(to right, #dc2626, #b91c1c);
+        }
+        .btn-reset {
+            background-image: linear-gradient(to right, #f97316, #ea580c); /* Orange gradient */
+        }
+        .btn-reset:hover {
+            background-image: linear-gradient(to right, #fb923c, #f97316);
+        }
+
+        .student-list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background-color: #f0f4f8;
+            border-radius: 0.5rem;
+        }
+        .student-list-item input[type="text"] {
+            flex-grow: 1;
+            margin-right: 0.5rem;
+        }
+        .student-list-item .gender-checkbox-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        .student-list-item .gender-checkbox-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            color: #334155;
+            font-size: 0.875rem;
+        }
+        .student-list-item .gender-checkbox-group input[type="checkbox"] {
+            width: auto; /* Override full width */
+            margin-right: 0.25rem;
+            width: 1rem; /* Adjust checkbox size */
+            height: 1rem;
+        }
+
+        /* Message Box & Tutorial Box & Data Management Box */
+        .message-box, .tutorial-message-box, .data-management-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .message-box p, .tutorial-message-box p, .data-management-modal p {
+            font-size: 1.125rem;
+            text-align: center;
+        }
+        .message-box button, .tutorial-message-box button, .data-management-modal button {
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+        }
+        .tutorial-message-box h3, .data-management-modal h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #334155;
+        }
+        .tutorial-message-box ol {
+            list-style: decimal;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .tutorial-message-box li {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: #475569;
+        }
+        .tutorial-message-box li strong {
+            color: #1e293b;
+        }
+
+        /* Data Management Modal specific styles */
+        .data-management-modal .input-group {
+            width: 100%;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .data-management-modal .input-group input {
+            flex-grow: 1;
+        }
+        .data-management-modal .saved-snapshots-list {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        .data-management-modal .saved-snapshot-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .data-management-modal .saved-snapshot-item:last-child {
+            border-bottom: none;
+        }
+        .data-management-modal .snapshot-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex-grow: 1;
+            margin-right: 0.5rem;
+        }
+        .data-management-modal .snapshot-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+        }
+        .data-management-modal .snapshot-timestamp {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .data-management-modal .snapshot-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .data-management-modal .snapshot-actions button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            box-shadow: none;
+        }
+        .data-management-modal .snapshot-actions .btn-load {
+            background-image: linear-gradient(to right, #3b82f6, #2563eb);
+        }
+        .data-management-modal .snapshot-actions .btn-delete {
+            background-image: linear-gradient(to right, #ef4444, #dc2626);
+        }
+
+
+        /* Drag ghost element style */
+        .drag-ghost {
+            position: fixed;
+            background-color: rgba(59, 130, 246, 0.8);
+            border-radius: 0.5rem;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            pointer-events: none;
+            z-index: 999;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+            transition: none;
+        }
+        .drag-ghost .desk-number { /* Hide number on ghost */
+            display: none;
+        }
+        /* Hidden utility class */
+        .hidden {
+            display: none !important;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .settings-header h2 {
+            margin-bottom: 0;
+        }
+        .settings-icon-button {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            box-shadow: none;
+        }
+        .settings-icon-button:hover {
+            transform: rotate(30deg);
+            opacity: 0.8;
+            box-shadow: none;
+            background-image: none;
+        }
+         .settings-icon-button:active {
+            transform: rotate(60deg);
+            opacity: 0.6;
+            box-shadow: none;
+        }
+        .settings-icon {
+            width: 24px;
+            height: 24px;
+            fill: #64748b;
+        }
+
+        /* Desk Options Overlay */
+        .desk-options-overlay {
+            position: absolute; /* Changed from fixed to absolute */
+            background-color: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100; /* Ensure it's above desks */
+            min-width: 120px;
+            text-align: center;
+        }
+        .desk-options-overlay button {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            border-radius: 0.4rem;
+            box-shadow: none;
+            background-image: none; /* Reset default button gradient */
+            background-color: #f0f4f8; /* Light background for options */
+            color: #334155;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .desk-options-overlay button:hover {
+            background-color: #e2e8f0;
+            transform: none; /* No translateY on hover */
+            box-shadow: none;
+        }
+        .desk-options-overlay button:active {
+            transform: translateY(0);
+        }
+        .desk-options-overlay .btn-delete-option {
+            background-color: #ef4444;
+            color: white;
+        }
+        .desk-options-overlay .btn-delete-option:hover {
+            background-color: #dc2626;
+        }
+        .desk-options-overlay .btn-male-option {
+            background-color: #60a5fa; /* Blueish */
+            color: white;
+        }
+        .desk-options-overlay .btn-male-option:hover {
+            background-color: #3b82f6;
+        }
+        .desk-options-overlay .btn-female-option {
+            background-color: #f472b6; /* Pinkish */
+            color: white;
+        }
+        .desk-options-overlay .btn-female-option:hover {
+            background-color: #ec4899;
+        }
+        .desk-options-overlay .btn-random-option {
+            background-color: #fbbf24; /* Yellowish */
+            color: white;
+        }
+        .desk-options-overlay .btn-random-option:hover {
+            background-color: #facc15;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-panel">
+            <h1 class="text-3xl font-bold text-gray-900">학생 자리 배치 도구</h1>
+            <div class="header-buttons">
+                <button onclick="showTutorialMessageBox()" class="btn-secondary">튜토리얼</button>
+                <button onclick="showDataManagementModal()" class="btn-secondary">데이터 관리</button>
+                <!-- Moved settings button here so it's always visible -->
+                <button onclick="toggleAvoidSettings()" class="settings-icon-button">
+                    <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.078 2.29c.47-.1.97-.1 1.442 0l.21.04a1 1 0 01.62.62l.04.21c.174.836.852 1.514 1.688 1.688l.21.04a1 1 0 01.62.62l.04.21c.1.47.1 1.012 0 1.482l-.04.21a1 1 0 01-.62.62l-.21.04c-.836.174-1.514.852-1.688-1.688l-.04.21a1 1 0 01-.62.62l-.21.04c-.47.1-.97.1-1.442 0l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.174-.836-.852-1.514-1.688-1.688l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.1-.47-.1-1.012 0-1.482l.04-.21a1 1 0 01.62-.62l.21-.04c.836-.174 1.514-.852 1.688-1.688l.04-.21a1 1 0 01.62-.62l.21-.04zM12 15a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content-panels">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">자리 배치 설정</h2>
+
+                <div class="mb-4">
+                    <label for="rows" class="block text-sm font-medium text-gray-700 mb-1">행 수 (Row Count)</label>
+                    <input type="number" id="rows" value="4" min="1" class="w-full">
+                </div>
+
+                <div class="mb-6">
+                    <label for="cols" class="block text-sm font-medium text-gray-700 mb-1">열 수 (Column Count)</label>
+                    <input type="number" id="cols" value="5" min="1" class="w-full">
+                </div>
+
+                <button onclick="generateLayout()" class="w-full mb-6">
+                    자리 배치 생성
+                </button>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">학생 목록</h3>
+                    <div id="studentListContainer" class="mb-4 border p-2 rounded-lg bg-white overflow-y-auto max-h-64">
+                        <!-- Student input rows will be added here dynamically -->
+                    </div>
+                    <button onclick="addStudentRow()" class="w-full btn-add-student">
+                        + 학생 추가
+                    </button>
+                </div>
+
+                <button onclick="shuffleSeats()" class="w-full mb-3">
+                    자리 바꾸기
+                </button>
+                <button onclick="resetApp()" class="w-full btn-reset">
+                    모든 설정 및 배치 초기화
+                </button>
+            </div>
+
+            <!-- Classroom Layout Visualization -->
+            <div id="classroomLayoutContainer" class="classroom-layout-container">
+                <div class="classroom-layout-header">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">교실 배치도</h2>
+                </div>
+                
+                <div id="classroomLayout" class="classroom-layout">
+                    <!-- Desks will be dynamically generated here -->
+                </div>
+                <p id="layoutMessage" class="mt-4 text-sm text-gray-600"></p>
+                <!-- Desk Options Overlay -->
+                <div id="deskOptionsOverlay" class="desk-options-overlay hidden">
+                    <button data-option-type="random" class="btn-random-option">랜덤 자리</button>
+                    <button data-option-type="male" class="btn-male-option">남학생 자리</button>
+                    <button data-option-type="female" class="btn-female-option">여학생 자리</button>
+                    <button data-option-type="delete" class="btn-delete-option">자리 삭제</button>
+                </div>
+            </div>
+
+            <!-- Avoid Student Settings -->
+            <div id="avoidSettingsPanel" class="settings-panel hidden">
+                <div class="settings-header">
+                    <h2 class="text-2xl font-bold text-gray-800">피해야 할 학생 설정</h2>
+                    <!-- Toggle button is now in header -->
+                </div>
+                <div id="avoidPairsContainer" class="mb-4">
+                    <!-- Avoid pairs will be added here -->
+                </div>
+                <button onclick="addAvoidPair()" class="w-full btn-secondary">
+                    + 피해야 할 학생 추가
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box for Alerts -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">확인</button>
+    </div>
+
+    <!-- Tutorial Message Box -->
+    <div id="tutorialMessageBox" class="tutorial-message-box">
+        <h3>학생 자리 배치 도구 사용법</h3>
+        <ol>
+            <li><strong>자리 배치 생성:</strong> 좌측에서 <strong>'행 수'</strong>와 <strong>'열 수'</strong>를 입력한 후 <strong>'자리 배치 생성'</strong> 버튼을 클릭하세요. 기본은 4행 5열입니다.</li>
+            <li><strong>학생 목록 입력:</strong> <strong>'+ 학생 추가' 버튼</strong>을 눌러 학생을 추가하고, 이름과 성별을 직접 체크하여 입력합니다.</li>
+            <li><strong>자리 유형 설정 (색상 및 삭제):</strong> 교실 배치도 내의 자리를 클릭하면 **연두색 테두리**로 강조되고 해당 자리 위에 **오버레이 메뉴**가 나타납니다. 이 메뉴에서 원하는 성별 유형 (남학생 자리, 여학생 자리, 랜덤 자리)을 선택하여 해당 자리의 **선호 성별 유형을 지정**하거나, **'자리 삭제'** 버튼을 눌러 자리를 비활성화할 수 있습니다.
+                <ul>
+                    <li><strong>노란색</strong>: 랜덤 자리</li>
+                    <li><strong>파란색</strong>: 남학생 자리</li>
+                    <li><strong>분홍색</strong>: 여학생 자리</li>
+                    <li><strong>회색</strong>: 삭제된 자리 (학생 배치 불가)</li>
+                </ul>
+            </li>
+            <li><strong>자리 삭제/복구:</strong> 자리 유형 설정 오버레이의 '자리 삭제' 버튼을 클릭하거나, 자리에 마우스를 올리면 나타나는 **'X' 버튼**을 클릭하여 해당 자리를 **삭제(비활성화)**할 수 있습니다. 삭제된 자리는 회색으로 표시되며, 더 이상 학생이 배치되거나 드래그 대상이 될 수 없습니다. 삭제된 자리에 마우스를 올리면 '복구' 버튼이 나타나 다시 활성화할 수 있습니다.</li>
+            <li><strong>피해야 할 학생 설정:</strong> 오른쪽 상단의 <strong>톱니바퀴 버튼</strong>을 클릭하여 '피해야 할 학생 설정' 패널을 열고, 함께 앉으면 안 되는 학생 쌍을 추가할 수 있습니다.</li>
+            <li><strong>자리 바꾸기:</strong> <strong>'자리 바꾸기'</strong> 버튼을 클릭하면, 현재 배치된 학생들이 **모두 새로운 자리로 무작위 재배치**됩니다. 이때, 각 자리의 선호 성별 유형(파랑/분홍/노랑)과 '피해야 할 학생' 규칙을 고려합니다.</li>
+            <li><strong>자리 수동 변경 (드래그 앤 드롭):</strong> 학생들이 배치된 후, 학생이 있는 책상을 마우스로 끌어서 **삭제되지 않은 다른 자리**에 놓으면 자리를 바꿀 수 있습니다. 이 기능은 '피해야 할 학생' 규칙 및 **대상 자리의 선호 성별 유형**에 영향을 받습니다. **자리 유형 설정 오버레이가 열린 상태에서는 드래그할 수 없습니다.**</li>
+            <li><strong>데이터 관리 (저장 및 불러오기):</strong> 오른쪽 상단의 <strong>'데이터 관리' 버튼</strong>을 클릭하면 팝업창이 열립니다. 여기서 현재 상태를 스냅샷으로 저장하거나, 이전에 저장된 스냅샷을 불러오거나 삭제할 수 있습니다. 저장 시 자동으로 년/월/일/시간이 기록됩니다.</li>
+            <li><strong>초기화:</strong> '자리 바꾸기' 버튼 아래의 <strong>'모든 설정 및 배치 초기화'</strong> 버튼을 클릭하면, 현재의 모든 설정(학생 목록, 피해야 할 학생, 자리 유형, 자리 삭제 상태)과 배치가 기본 상태로 초기화됩니다.</li>
+        </ol>
+        <button onclick="hideTutorialMessageBox()">닫기</button>
+    </div>
+
+    <!-- Data Management Modal -->
+    <div id="dataManagementModal" class="data-management-modal">
+        <h3>데이터 관리</h3>
+        <div class="input-group">
+            <input type="text" id="snapshotNameInput" placeholder="스냅샷 이름 (선택 사항)">
+            <button onclick="saveSnapshot()">현재 상태 스냅샷으로 저장</button>
+        </div>
+        <h4>저장된 스냅샷</h4>
+        <div id="savedSnapshotsList" class="saved-snapshots-list">
+            <p class="text-sm text-gray-500 text-center p-2">저장된 스냅샷이 없습니다.</p>
+        </div>
+        <button onclick="hideDataManagementModal()">닫기</button>
+    </div>
+
+    <script>
+        let rows = 4; // Default rows
+        let cols = 5; // Default columns
+        let placedStudents = []; // Array to hold {name, gender, originalIndex} of students placed on desks
+        let studentData = []; // Array of {name, maleChecked, femaleChecked} from dynamic input rows
+        let studentNames = []; // Derived from studentData: {name, gender} objects for shuffle logic
+        let avoidRules = []; // Array of [student1, student2] pairs to avoid
+        
+        let deskGenderPreferences = []; // Stores 'random', 'male', 'female' for each desk
+        let deskAvailability = []; // 'active' or 'inactive' for each desk (for deleted desks)
+        
+        let currentDeskForPreferenceChange = null; // Stores the index of the desk currently highlighted for preference change (green border)
+
+        let dragSrcDeskIndex = null; // Index of the desk being dragged from
+        let dragGhost = null; // Element for visual feedback during drag
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let isDragging = false;
+        const dragThreshold = 5;
+
+        let savedSnapshots = []; // Array to hold multiple saved states (snapshots)
+
+        // DOM elements
+        const rowsInput = document.getElementById('rows');
+        const colsInput = document.getElementById('cols');
+        const studentListContainer = document.getElementById('studentListContainer');
+        const classroomLayoutDiv = document.getElementById('classroomLayout');
+        const layoutMessage = document.getElementById('layoutMessage');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const tutorialMessageBox = document.getElementById('tutorialMessageBox');
+        const avoidPairsContainer = document.getElementById('avoidPairsContainer');
+        const avoidSettingsPanel = document.getElementById('avoidSettingsPanel');
+        const deskOptionsOverlay = document.getElementById('deskOptionsOverlay');
+        const classroomLayoutContainer = document.getElementById('classroomLayoutContainer'); // Added ID for new positioning context
+        const dataManagementModal = document.getElementById('dataManagementModal');
+        const snapshotNameInput = document.getElementById('snapshotNameInput');
+        const savedSnapshotsList = document.getElementById('savedSnapshotsList');
+
+
+        // --- Local Storage Management ---
+
+        /**
+         * Saves the current working state of the application to a single local storage entry.
+         * This state is automatically loaded on page refresh.
+         */
+        function saveData() {
+            const data = {
+                rows: rowsInput.value,
+                cols: colsInput.value,
+                studentData: studentData,
+                placedStudents: placedStudents,
+                avoidRules: avoidRules,
+                deskGenderPreferences: deskGenderPreferences,
+                deskAvailability: deskAvailability,
+            };
+            localStorage.setItem('studentSeatingAppCurrentState', JSON.stringify(data)); // Changed key for current state
+        }
+
+        /**
+         * Loads the current working state from local storage.
+         * This is called on initial page load.
+         */
+        function loadData() {
+            const savedData = localStorage.getItem('studentSeatingAppCurrentState');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+
+                rowsInput.value = data.rows || 4;
+                colsInput.value = data.cols || 5;
+                rows = parseInt(rowsInput.value);
+                cols = parseInt(colsInput.value);
+
+                studentData = data.studentData || [];
+                renderStudentList(); 
+
+                placedStudents = data.placedStudents || [];
+                avoidRules = data.avoidRules || [];
+                deskGenderPreferences = data.deskGenderPreferences || [];
+                deskAvailability = data.deskAvailability || [];
+                
+                generateLayout(false); // Generate layout without re-initializing preferences
+                updateDeskVisuals();
+                applyDeskGenderPreferencesVisuals();
+                applyDeskAvailabilityVisuals();
+                renderAvoidRules();
+
+                showMessageBox('이전 작업 상태가 로드되었습니다.', 2000);
+
+            } else {
+                // If no current state saved, initialize with defaults and generate layout
+                rows = parseInt(rowsInput.value);
+                cols = parseInt(colsInput.value);
+                generateLayout(); // Generate initial default layout
+            }
+        }
+
+        /**
+         * Saves the current application state as a named snapshot.
+         */
+        function saveSnapshot() {
+            const snapshotName = snapshotNameInput.value.trim();
+            const timestamp = new Date().toLocaleString('ko-KR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            const uniqueId = Date.now().toString(); // Simple unique ID for now
+
+            const currentAppState = {
+                rows: rowsInput.value,
+                cols: colsInput.value,
+                studentData: studentData,
+                placedStudents: placedStudents,
+                avoidRules: avoidRules,
+                deskGenderPreferences: deskGenderPreferences,
+                deskAvailability: deskAvailability,
+            };
+
+            const newSnapshot = {
+                id: uniqueId,
+                name: snapshotName === '' ? `저장된 스냅샷 (${timestamp})` : snapshotName,
+                timestamp: timestamp,
+                data: currentAppState
+            };
+
+            const existingSnapshots = JSON.parse(localStorage.getItem('studentSeatingAppSnapshots') || '[]');
+            existingSnapshots.push(newSnapshot);
+            localStorage.setItem('studentSeatingAppSnapshots', JSON.stringify(existingSnapshots));
+            
+            savedSnapshots = existingSnapshots; // Update global array
+            renderSnapshotList();
+            showMessageBox('현재 상태가 스냅샷으로 저장되었습니다!', 1500);
+            snapshotNameInput.value = ''; // Clear input
+        }
+
+        /**
+         * Loads a specific snapshot by its ID.
+         * @param {string} snapshotId - The ID of the snapshot to load.
+         */
+        function loadSnapshot(snapshotId) {
+            const snapshots = JSON.parse(localStorage.getItem('studentSeatingAppSnapshots') || '[]');
+            const snapshotToLoad = snapshots.find(s => s.id === snapshotId);
+
+            if (snapshotToLoad) {
+                const data = snapshotToLoad.data;
+
+                rowsInput.value = data.rows;
+                colsInput.value = data.cols;
+                rows = parseInt(rowsInput.value);
+                cols = parseInt(colsInput.value);
+
+                studentData = data.studentData;
+                renderStudentList(); 
+
+                placedStudents = data.placedStudents;
+                avoidRules = data.avoidRules;
+                deskGenderPreferences = data.deskGenderPreferences;
+                deskAvailability = data.deskAvailability;
+                
+                generateLayout(false); // Generate layout with loaded dimensions, don't re-init
+                updateDeskVisuals();
+                applyDeskGenderPreferencesVisuals();
+                applyDeskAvailabilityVisuals();
+                renderAvoidRules();
+                saveData(); // Save the loaded state as the new current working state
+
+                hideDataManagementModal();
+                showMessageBox(`'${snapshotToLoad.name}' 스냅샷을 불러왔습니다.`, 2000);
+            } else {
+                showMessageBox('선택된 스냅샷을 찾을 수 없습니다.', 2000);
+            }
+        }
+
+        /**
+         * Deletes a specific snapshot by its ID.
+         * @param {string} snapshotId - The ID of the snapshot to delete.
+         */
+        function deleteSnapshot(snapshotId) {
+            let snapshots = JSON.parse(localStorage.getItem('studentSeatingAppSnapshots') || '[]');
+            snapshots = snapshots.filter(s => s.id !== snapshotId);
+            localStorage.setItem('studentSeatingAppSnapshots', JSON.stringify(snapshots));
+            
+            savedSnapshots = snapshots; // Update global array
+            renderSnapshotList();
+            showMessageBox('스냅샷이 삭제되었습니다.', 1000);
+        }
+
+        /**
+         * Renders the list of saved snapshots in the data management modal.
+         */
+        function renderSnapshotList() {
+            savedSnapshotsList.innerHTML = '';
+            const snapshots = JSON.parse(localStorage.getItem('studentSeatingAppSnapshots') || '[]');
+            
+            if (snapshots.length === 0) {
+                savedSnapshotsList.innerHTML = '<p class="text-sm text-gray-500 text-center p-2">저장된 스냅샷이 없습니다.</p>';
+                return;
+            }
+
+            snapshots.forEach(snapshot => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('saved-snapshot-item');
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.classList.add('snapshot-details');
+                detailsDiv.innerHTML = `
+                    <span class="snapshot-name">${snapshot.name}</span>
+                    <span class="snapshot-timestamp">${snapshot.timestamp}</span>
+                `;
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.classList.add('snapshot-actions');
+
+                const loadBtn = document.createElement('button');
+                loadBtn.textContent = '불러오기';
+                loadBtn.classList.add('btn-secondary', 'btn-load');
+                loadBtn.onclick = () => loadSnapshot(snapshot.id);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.classList.add('btn-secondary', 'btn-delete');
+                deleteBtn.onclick = () => deleteSnapshot(snapshot.id);
+
+                actionsDiv.appendChild(loadBtn);
+                actionsDiv.appendChild(deleteBtn);
+
+                itemDiv.appendChild(detailsDiv);
+                itemDiv.appendChild(actionsDiv);
+                savedSnapshotsList.appendChild(itemDiv);
+            });
+        }
+
+
+        // --- UI Interactions ---
+
+        /**
+         * Displays a custom message box.
+         * @param {string} message - The message to display.
+         * @param {number} [duration=0] - Duration in ms before hiding. 0 means manual close.
+         */
+        function showMessageBox(message, duration = 0) {
+            messageText.textContent = message;
+            messageBox.style.display = 'flex';
+            if (duration > 0) {
+                setTimeout(hideMessageBox, duration);
+            }
+        }
+
+        /**
+         * Hides the custom message box.
+         */
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+        }
+
+        /**
+         * Shows the tutorial message box.
+         */
+        function showTutorialMessageBox() {
+            tutorialMessageBox.style.display = 'flex';
+        }
+
+        /**
+         * Hides the tutorial message box.
+         */
+        function hideTutorialMessageBox() {
+            tutorialMessageBox.style.display = 'none';
+        }
+
+        /**
+         * Shows the data management modal.
+         */
+        function showDataManagementModal() {
+            renderSnapshotList(); // Always refresh the list when opening
+            dataManagementModal.style.display = 'flex';
+        }
+
+        /**
+         * Hides the data management modal.
+         */
+        function hideDataManagementModal() {
+            dataManagementModal.style.display = 'none';
+            snapshotNameInput.value = ''; // Clear name input
+        }
+
+        /**
+         * Toggles the visibility of the avoid student settings panel.
+         */
+        function toggleAvoidSettings() {
+            avoidSettingsPanel.classList.toggle('hidden');
+            saveData();
+        }
+
+        /**
+         * Clears the preference focus highlight (green border) from all desks.
+         * Also hides the desk options overlay.
+         */
+        function clearPreferenceFocus() {
+            const focusedDesk = classroomLayoutDiv.querySelector('.preference-focused');
+            if (focusedDesk) {
+                focusedDesk.classList.remove('preference-focused');
+            }
+            currentDeskForPreferenceChange = null;
+            hideDeskOptionsOverlay(); // Hide overlay when focus is cleared
+        }
+
+        /**
+         * Shows the desk options overlay positioned relative to the clicked desk.
+         * @param {HTMLElement} deskElement - The desk element to position the overlay next to.
+         */
+        function showDeskOptionsOverlay(deskElement) {
+            const deskRect = deskElement.getBoundingClientRect(); // Desk position relative to viewport
+            const layoutContainerRect = classroomLayoutContainer.getBoundingClientRect(); // Layout container position relative to viewport
+            const classroomLayoutScrollLeft = classroomLayoutDiv.scrollLeft; // Actual horizontal scroll of the grid
+            const classroomLayoutScrollTop = classroomLayoutDiv.scrollTop; // Actual vertical scroll of the grid
+
+            // Calculate position relative to classroomLayoutContainer's top-left corner
+            const topOffset = deskRect.top - layoutContainerRect.top + classroomLayoutScrollTop;
+            const leftOffset = deskRect.left - layoutContainerRect.left + classroomLayoutScrollLeft;
+
+            // Position vertically centered with the desk
+            deskOptionsOverlay.style.top = `${topOffset + (deskElement.offsetHeight / 2) - (deskOptionsOverlay.offsetHeight / 2)}px`;
+            
+            // Default position: to the right of the desk, with 5px padding
+            let desiredLeft = leftOffset + deskElement.offsetWidth + 5; 
+
+            // Check if positioning to the right goes off the right edge of the *classroomLayoutContainer*
+            // We use layoutContainerRect.width for the visible width of the container.
+            if (desiredLeft + deskOptionsOverlay.offsetWidth > classroomLayoutContainer.offsetWidth) {
+                // If it goes off, position to the left of the desk instead
+                desiredLeft = leftOffset - deskOptionsOverlay.offsetWidth - 5; // 5px padding from desk left
+                // Ensure it doesn't go off the left edge of the container
+                if (desiredLeft < 0) {
+                    desiredLeft = 0; // Stick to the left edge if no other option
+                }
+            }
+            deskOptionsOverlay.style.left = `${desiredLeft}px`;
+
+            deskOptionsOverlay.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the desk options overlay.
+         */
+        function hideDeskOptionsOverlay() {
+            deskOptionsOverlay.classList.add('hidden');
+        }
+
+        /**
+         * Applies the selected mode to the 'currentDeskForPreferenceChange'.
+         * This function is triggered by buttons in the overlay.
+         * @param {string} mode - 'random', 'male', 'female', 'delete'.
+         */
+        function applyDeskTypeFromOverlay(mode) {
+            if (currentDeskForPreferenceChange === null) {
+                showMessageBox('먼저 자리를 선택해주세요.', 1500);
+                return;
+            }
+
+            if (mode === 'delete') {
+                removeDesk(currentDeskForPreferenceChange);
+                showMessageBox(`${currentDeskForPreferenceChange + 1}번 자리가 삭제되었습니다.`, 1500);
+            } else {
+                deskGenderPreferences[currentDeskForPreferenceChange] = mode;
+                applyDeskGenderPreferencesVisuals(); 
+                showMessageBox(`${currentDeskForPreferenceChange + 1}번 자리 유형이 '${mode === 'random' ? '랜덤' : mode === 'male' ? '남학생' : '여학생'}'으로 설정되었습니다.`, 1500);
+            }
+
+            clearPreferenceFocus(); // Clear the green highlight and hide overlay
+            saveData(); // Save updated preferences/availability
+        }
+
+        /**
+         * Sets up event listeners for the desk options overlay buttons.
+         */
+        function initDeskOptionsOverlayButtons() {
+            deskOptionsOverlay.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const optionType = e.target.dataset.optionType;
+                    if (currentDeskForPreferenceChange !== null) {
+                        applyDeskTypeFromOverlay(optionType);
+                    }
+                    e.stopPropagation(); // Prevent document click from immediately closing it after selection
+                });
+            });
+        }
+
+
+        // --- Student Data & Layout Functions ---
+
+        /**
+         * Renders the dynamic student input list from studentData.
+         */
+        function renderStudentList() {
+            studentListContainer.innerHTML = '';
+            studentData.forEach((student, index) => {
+                const div = document.createElement('div');
+                div.classList.add('student-list-item');
+                div.dataset.index = index;
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.placeholder = '이름';
+                nameInput.value = student.name;
+                nameInput.addEventListener('input', (e) => {
+                    studentData[index].name = e.target.value.trim();
+                    parseStudentNames(); // Re-parse and save on name change
+                });
+
+                const genderGroup = document.createElement('div');
+                genderGroup.classList.add('gender-checkbox-group');
+
+                const maleLabel = document.createElement('label');
+                maleLabel.innerHTML = `<input type="checkbox" data-gender-type="male" ${student.maleChecked ? 'checked' : ''}> 남`;
+                maleLabel.querySelector('input').addEventListener('change', (e) => {
+                    studentData[index].maleChecked = e.target.checked;
+                    if (e.target.checked) { // Only uncheck female if male is now checked
+                        studentData[index].femaleChecked = false;
+                        maleLabel.parentElement.querySelector('input[data-gender-type="female"]').checked = false;
+                    }
+                    parseStudentNames();
+                });
+
+                const femaleLabel = document.createElement('label');
+                femaleLabel.innerHTML = `<input type="checkbox" data-gender-type="female" ${student.femaleChecked ? 'checked' : ''}> 여`;
+                femaleLabel.querySelector('input').addEventListener('change', (e) => {
+                    studentData[index].femaleChecked = e.target.checked;
+                    if (e.target.checked) { // Only uncheck male if female is now checked
+                        studentData[index].maleChecked = false;
+                        femaleLabel.parentElement.querySelector('input[data-gender-type="male"]').checked = false;
+                    }
+                    parseStudentNames();
+                });
+
+                genderGroup.appendChild(maleLabel);
+                genderGroup.appendChild(femaleLabel);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.classList.add('btn-delete-student');
+                deleteBtn.onclick = () => removeStudentRow(index);
+
+                div.appendChild(nameInput);
+                div.appendChild(genderGroup);
+                div.appendChild(deleteBtn);
+                studentListContainer.appendChild(div);
+            });
+            saveData();
+        }
+
+        /**
+         * Adds a new empty row for student input.
+         */
+        function addStudentRow() {
+            studentData.push({ name: '', maleChecked: false, femaleChecked: false });
+            renderStudentList();
+        }
+
+        /**
+         * Removes a student row by index.
+         * @param {number} index - The index of the student row to remove.
+         */
+        function removeStudentRow(index) {
+            studentData.splice(index, 1);
+            renderStudentList();
+            parseStudentNames(); // Re-parse after removal
+        }
+
+
+        /**
+         * Parses student names from the dynamic input rows into an array of objects with name and gender.
+         * Also updates the placedStudents array to reflect changes in studentData (gender or removal).
+         * Gender is determined by explicit checkboxes.
+         */
+        function parseStudentNames() {
+            studentNames = studentData.map(student => {
+                let assignedGender = '무'; // Default unknown
+                if (student.name.trim() === '') return null; // Filter out empty names immediately
+
+                if (student.maleChecked && !student.femaleChecked) {
+                    assignedGender = '남';
+                } else if (student.femaleChecked && !student.maleChecked) {
+                    assignedGender = '여';
+                }
+                return { name: student.name.trim(), gender: assignedGender };
+            }).filter(student => student !== null); // Filter out empty names that are now null
+
+            // Update placedStudents based on changes in studentNames
+            // Create a map for quick lookup of current students
+            const currentStudentMap = new Map(studentNames.map(s => [s.name, s]));
+
+            for (let i = 0; i < placedStudents.length; i++) {
+                const placed = placedStudents[i];
+                if (placed) {
+                    const updatedStudentInfo = currentStudentMap.get(placed.name);
+
+                    if (updatedStudentInfo && updatedStudentInfo.gender === placed.gender) {
+                        // Student exists and gender hasn't changed, keep as is
+                    } else if (updatedStudentInfo && updatedStudentInfo.gender !== placed.gender) {
+                        // Student exists but gender has changed, update it
+                        placedStudents[i].gender = updatedStudentInfo.gender;
+                    } else {
+                        // Student no longer exists in studentNames, or is a duplicate
+                        placedStudents[i] = null;
+                    }
+                }
+            }
+            
+            updateDeskVisuals(); // Refresh visuals after updating placedStudents
+            saveData(); // Save updated student names and placedStudents
+        }
+
+
+        /**
+         * Generates the classroom layout grid based on rows and cols.
+         * @param {boolean} [initializePreferences=true] - If true, initializes desk preferences to random and availability to active.
+         */
+        function generateLayout(initializePreferences = true) {
+            rows = parseInt(rowsInput.value);
+            cols = parseInt(colsInput.value);
+
+            if (isNaN(rows) || isNaN(cols) || rows <= 0 || cols <= 0) {
+                showMessageBox('유효한 행 수와 열 수를 입력해주세요.');
+                return;
+            }
+
+            classroomLayoutDiv.innerHTML = '';
+            classroomLayoutDiv.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            layoutMessage.textContent = `${rows}행 ${cols}열의 자리 배치도가 생성되었습니다.`;
+
+            const totalDesks = rows * cols;
+            // Only reset placedStudents and preferences/availability if generating a completely new layout
+            if (initializePreferences) {
+                placedStudents = Array(totalDesks).fill(null); // Reset placed students array
+                deskGenderPreferences = Array(totalDesks).fill('random'); // Reset desk gender preferences to random
+                deskAvailability = Array(totalDesks).fill('active'); // All desks are active by default
+            } else {
+                 // Adjust array sizes if layout changes (e.g., rows/cols changed) but keep existing data where possible
+                if (placedStudents.length !== totalDesks) {
+                    const newPlacedStudents = Array(totalDesks).fill(null);
+                    for (let i = 0; i < Math.min(placedStudents.length, totalDesks); i++) {
+                        newPlacedStudents[i] = placedStudents[i];
+                    }
+                    placedStudents = newPlacedStudents;
+                }
+                if (deskGenderPreferences.length !== totalDesks) {
+                    const newDeskPreferences = Array(totalDesks).fill('random');
+                    for (let i = 0; i < Math.min(deskGenderPreferences.length, totalDesks); i++) {
+                        newDeskPreferences[i] = deskGenderPreferences[i];
+                    }
+                    deskGenderPreferences = newDeskPreferences;
+                }
+                if (deskAvailability.length !== totalDesks) {
+                    const newDeskAvailability = Array(totalDesks).fill('active');
+                    for (let i = 0; i < Math.min(deskAvailability.length, totalDesks); i++) {
+                        newDeskAvailability[i] = deskAvailability[i];
+                    }
+                    deskAvailability = newDeskAvailability;
+                }
+            }
+
+
+            for (let i = 0; i < totalDesks; i++) {
+                const desk = document.createElement('div');
+                desk.classList.add('desk');
+                desk.dataset.index = i;
+                desk.style.position = 'relative'; // For desk number positioning
+
+                // Inner content for student name/gender
+                const studentContentDiv = document.createElement('div');
+                studentContentDiv.classList.add('desk-content');
+                studentContentDiv.innerHTML = `<span class="desk-number">${i + 1}</span>`; // Always show desk number
+                desk.appendChild(studentContentDiv);
+
+                // Delete button (X to remove, Restore to restore)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('desk-delete-btn');
+                // The text and onclick will be set by applyDeskAvailabilityVisuals
+                desk.appendChild(deleteBtn);
+
+                desk.addEventListener('mousedown', handleMouseDown);
+                desk.addEventListener('click', handleDeskClick);
+
+                classroomLayoutDiv.appendChild(desk);
+            }
+            applyDeskGenderPreferencesVisuals(); // Apply initial/loaded gender type colors
+            applyDeskAvailabilityVisuals(); // Apply initial/loaded availability visuals
+            updateDeskVisuals(); // Set initial occupied/empty states
+            saveData(); // Save layout and selection state
+        }
+
+        /**
+         * Resets all app data to its initial default state.
+         */
+        function resetApp() {
+            rowsInput.value = 4;
+            colsInput.value = 5;
+            studentData = [];
+            addStudentRow(); // Add one empty student row by default
+            avoidRules = [];
+            renderAvoidRules();
+
+            // Reset layout and all desk-related data
+            generateLayout(true); 
+
+            showMessageBox('모든 설정 및 배치가 초기화되었습니다.', 2000);
+            saveData();
+        }
+
+        /**
+         * Applies the desk gender preference classes to desk elements.
+         */
+        function applyDeskGenderPreferencesVisuals() {
+            const desks = classroomLayoutDiv.children;
+            for (let i = 0; i < desks.length; i++) {
+                const desk = desks[i];
+                // Remove existing desk-type classes first to prevent accumulation
+                desk.classList.remove('desk-type-random', 'desk-type-male', 'desk-type-female');
+                // Add the current preference class, defaulting to 'random' if not set
+                desk.classList.add(`desk-type-${deskGenderPreferences[i] || 'random'}`); 
+            }
+        }
+
+        /**
+         * Applies the desk availability classes (e.g., 'inactive') to desk elements.
+         */
+        function applyDeskAvailabilityVisuals() {
+            const desks = classroomLayoutDiv.children;
+            for (let i = 0; i < desks.length; i++) {
+                const desk = desks[i];
+                if (deskAvailability[i] === 'inactive') {
+                    desk.classList.add('inactive');
+                    // Ensure delete button is always there but hidden by CSS, not removed
+                    const deleteBtn = desk.querySelector('.desk-delete-btn');
+                    if(deleteBtn) {
+                        deleteBtn.textContent = '복구'; // Change text to 'restore'
+                        deleteBtn.onclick = (event) => { // Change function to restore
+                            event.stopPropagation();
+                            restoreDesk(i);
+                        };
+                    }
+                } else {
+                    desk.classList.remove('inactive');
+                    const deleteBtn = desk.querySelector('.desk-delete-btn');
+                    if(deleteBtn) {
+                        deleteBtn.textContent = 'X'; // Change text back to 'X'
+                        deleteBtn.onclick = (event) => { // Change function back to remove
+                            event.stopPropagation();
+                            removeDesk(i);
+                        };
+                    }
+                }
+            }
+        }
+
+        /**
+         * Updates the visual representation of desks with student names and gender.
+         * Also updates desk classes (occupied/empty) and cursor styles based on actual student gender.
+         */
+        function updateDeskVisuals() {
+            const desks = classroomLayoutDiv.children;
+            for (let i = 0; i < desks.length; i++) {
+                const desk = desks[i];
+                const deskContentDiv = desk.querySelector('.desk-content'); // Get the content div
+                if (!deskContentDiv) continue; // Should not happen
+
+                // Clear existing student info (excluding desk number)
+                deskContentDiv.querySelectorAll('.student-name, .student-gender').forEach(el => el.remove());
+                desk.classList.remove('occupied', 'empty', 'student-gender-male', 'student-gender-female', 'student-gender-unknown');
+                desk.style.cursor = 'default';
+
+                const student = placedStudents[i];
+                if (student && deskAvailability[i] === 'active') { // Only display student if desk is active
+                    const nameSpan = document.createElement('span');
+                    nameSpan.classList.add('student-name');
+                    nameSpan.textContent = student.name;
+                    deskContentDiv.appendChild(nameSpan);
+
+                    if (student.gender && student.gender !== '무') {
+                        const genderSpan = document.createElement('span');
+                        genderSpan.classList.add('student-gender');
+                        genderSpan.textContent = `(${student.gender})`;
+                        deskContentDiv.appendChild(genderSpan);
+                    }
+                    desk.classList.add('occupied');
+                    desk.style.cursor = 'grab';
+
+                    // Add class based on actual student's gender for specific occupied coloring
+                    if (student.gender === '남') {
+                        desk.classList.add('student-gender-male');
+                    } else if (student.gender === '여') {
+                        desk.classList.add('student-gender-female');
+                    } else {
+                        desk.classList.add('student-gender-unknown');
+                    }
+                } else if (deskAvailability[i] === 'active') { // If active but empty
+                    desk.classList.add('empty');
+                    desk.style.cursor = 'pointer';
+                }
+                // If inactive, it will be handled by applyDeskAvailabilityVisuals
+            }
+        }
+
+        /**
+         * Removes (deactivates) a desk from the layout.
+         * @param {number} index - The index of the desk to remove.
+         */
+        function removeDesk(index) {
+            if (deskAvailability[index] === 'inactive') return; // Already inactive
+
+            deskAvailability[index] = 'inactive';
+            placedStudents[index] = null; // Remove any student on this desk
+            clearPreferenceFocus(); // Clear green focus if this desk was focused
+
+            applyDeskAvailabilityVisuals(); // Update visual to inactive
+            updateDeskVisuals(); // Remove student visual
+
+            showMessageBox(`${index + 1}번 자리가 삭제(비활성화)되었습니다.`, 1500);
+            saveData();
+        }
+
+        /**
+         * Restores (activates) a previously removed desk.
+         * @param {number} index - The index of the desk to restore.
+         */
+        function restoreDesk(index) {
+            if (deskAvailability[index] === 'active') return; // Already active
+
+            deskAvailability[index] = 'active';
+            
+            applyDeskAvailabilityVisuals(); // Update visual to active
+            updateDeskVisuals(); // Update to empty state
+
+            showMessageBox(`${index + 1}번 자리가 복구(활성화)되었습니다.`, 1500);
+            saveData();
+        }
+
+
+        /**
+         * Shuffles students and assigns them to desks based on gender preferences and avoid rules.
+         * This version attempts to place students systematically with preference, then fills remaining.
+         */
+        function shuffleSeats() {
+            parseStudentNames(); // Make sure studentNames is up-to-date
+            if (studentNames.length === 0) {
+                showMessageBox('학생 목록을 먼저 입력해주세요.', 1500);
+                return;
+            }
+
+            const totalDesks = rows * cols;
+            const allActiveDesksIndices = []; // Indices of all desks that are 'active' (not deleted)
+            for (let i = 0; i < totalDesks; i++) {
+                if (deskAvailability[i] === 'active') {
+                    allActiveDesksIndices.push(i);
+                }
+            }
+
+            if (studentNames.length > allActiveDesksIndices.length) {
+                showMessageBox(`학생 수(${studentNames.length})가 배치할 수 있는 활성 자리 수(${allActiveDesksIndices.length})보다 많습니다. 학생 수를 줄이거나 자리를 늘려주세요.`, 5000);
+                return;
+            }
+
+            let shuffleSuccessful = false;
+            let currentAttempt = 0;
+            const maxAttempts = 5000; // Increased attempts for more robustness
+
+            while (currentAttempt < maxAttempts && !shuffleSuccessful) {
+                let trialPlacement = Array(totalDesks).fill(null);
+                // Initialize inactive desks in trial placement
+                for (let i = 0; i < totalDesks; i++) {
+                    if (deskAvailability[i] === 'inactive') {
+                        trialPlacement[i] = null;
+                    }
+                }
+
+                let currentStudentsInPool = shuffleArray([...studentNames]); // All students, shuffled for this attempt
+                
+                // Helper function to try placing a student and update currentStudentsInPool
+                const tryPlaceAndRemove = (studentToPlace, deskIndex, currentTrialPlacement, pool) => {
+                    currentTrialPlacement[deskIndex] = studentToPlace;
+                    if (checkAllAvoidRules(studentToPlace.name, deskIndex, currentTrialPlacement, rows, cols, avoidRules)) {
+                        // Successfully placed, remove from the current working pool
+                        const studentIndexInPool = pool.findIndex(s => s.name === studentToPlace.name && s.gender === studentToPlace.gender);
+                        if (studentIndexInPool !== -1) {
+                            pool.splice(studentIndexInPool, 1);
+                        }
+                        return true;
+                    }
+                    currentTrialPlacement[deskIndex] = null; // Backtrack
+                    return false;
+                };
+
+                // Phase 1: STRICTLY place gendered students into their matching preferred desks
+                // Sort desks by preference to ensure a consistent attempt order for strict desks
+                const malePreferredDesksIndices = shuffleArray(allActiveDesksIndices.filter(idx => deskGenderPreferences[idx] === 'male'));
+                for (const deskIndex of malePreferredDesksIndices) {
+                    if (trialPlacement[deskIndex] !== null) continue; // Already filled (shouldn't happen in P1 if logic is right)
+                    if (currentStudentsInPool.length === 0) break;
+
+                    const eligibleMales = currentStudentsInPool.filter(s => s.gender === '남'); // Strictly only male students
+                    if (eligibleMales.length === 0) continue; // No males left for this strict desk
+
+                    let studentPlaced = false;
+                    for (const student of shuffleArray(eligibleMales)) { // Shuffle eligible males for randomness
+                        if (tryPlaceAndRemove(student, deskIndex, trialPlacement, currentStudentsInPool)) {
+                            studentPlaced = true;
+                            break;
+                        }
+                    }
+                    // If not placed, this strict male desk remains empty for now for strict male
+                }
+
+                const femalePreferredDesksIndices = shuffleArray(allActiveDesksIndices.filter(idx => deskGenderPreferences[idx] === 'female'));
+                for (const deskIndex of femalePreferredDesksIndices) {
+                    if (trialPlacement[deskIndex] !== null) continue; // Already filled
+                    if (currentStudentsInPool.length === 0) break;
+
+                    const eligibleFemales = currentStudentsInPool.filter(s => s.gender === '여'); // Strictly only female students
+                    if (eligibleFemales.length === 0) continue; // No females left for this strict desk
+
+                    let studentPlaced = false;
+                    for (const student of shuffleArray(eligibleFemales)) { // Shuffle eligible females for randomness
+                        if (tryPlaceAndRemove(student, deskIndex, trialPlacement, currentStudentsInPool)) {
+                            studentPlaced = true;
+                            break;
+                        }
+                    }
+                    // If not placed, this strict female desk remains empty for now for strict female
+                }
+
+                // Phase 2: Place remaining students into random-preferred desks and then fill any remaining gendered desks (if possible with matching or '무' but NOT opposite gender)
+                const randomDesksIndices = shuffleArray(allActiveDesksIndices.filter(idx => deskGenderPreferences[idx] === 'random'));
+                const unfilledMaleDesks = shuffleArray(malePreferredDesksIndices.filter(idx => trialPlacement[idx] === null)); // Male desks still empty from Phase 1
+                const unfilledFemaleDesks = shuffleArray(femalePreferredDesksIndices.filter(idx => trialPlacement[idx] === null)); // Female desks still empty from Phase 1
+
+                // Combine all remaining empty active desks in a shuffled order
+                const allRemainingEmptyActiveDesks = shuffleArray([
+                    ...randomDesksIndices.filter(idx => trialPlacement[idx] === null), // Random desks that are empty
+                    ...unfilledMaleDesks,
+                    ...unfilledFemaleDesks
+                ]);
+
+                for (const deskIndex of allRemainingEmptyActiveDesks) {
+                    if (currentStudentsInPool.length === 0) break; // All students placed
+
+                    const deskType = deskGenderPreferences[deskIndex];
+
+                    const eligibleStudentsForThisDesk = currentStudentsInPool.filter(student => {
+                        if (deskType === 'random') {
+                            return true; // Any student can go to a random desk
+                        } else if (deskType === 'male') {
+                            // Male-preferred desk: allow '남' or '무'
+                            return student.gender === '남' || student.gender === '무';
+                        } else if (deskType === 'female') {
+                            // Female-preferred desk: allow '여' or '무'
+                            return student.gender === '여' || student.gender === '무';
+                        }
+                        return false; // Should not reach here for active desks
+                    });
+                    
+                    // Attempt to place an eligible student
+                    for (const student of shuffleArray(eligibleStudentsForThisDesk)) {
+                        if (tryPlaceAndRemove(student, deskIndex, trialPlacement, currentStudentsInPool)) {
+                            break; // Student placed, move to next desk
+                        }
+                    }
+                }
+
+                // Check if all original students were placed
+                if (currentStudentsInPool.length === 0) { // If the pool is empty, all students were placed
+                    placedStudents = trialPlacement;
+                    shuffleSuccessful = true;
+                }
+                currentAttempt++;
+            }
+
+            // --- Finalize and update UI ---
+            if (shuffleSuccessful) {
+                showMessageBox('자리 배치가 완료되었습니다!', 1500);
+            } else {
+                // If shuffle failed, clear all students from active desks to reflect no valid placement
+                for(let i = 0; i < totalDesks; i++) {
+                    if (deskAvailability[i] === 'active') { // Clear only active desks
+                        placedStudents[i] = null;
+                    }
+                }
+                showMessageBox('모든 규칙을 만족하는 자리 배치를 찾을 수 없습니다. 피해야 할 학생 규칙을 줄이거나 학생 목록/자리 유형을 조정해주세요.', 5000);
+            }
+
+            updateDeskVisuals(); // Update UI with the final placement (or cleared state)
+            saveData(); // Save the new placement state
+        }
+
+
+        /**
+         * Shuffles an array randomly using Fisher-Yates algorithm.
+         * @param {Array} array - The array to shuffle.
+         * @returns {Array} The shuffled array.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * Checks if placing a student at a specific desk violates any "avoid" rules.
+         * @param {string} studentName - The name of the student to place.
+         * @param {number} deskIndex - The index of the desk where the student is to be placed.
+         * @param {Array} currentPlacement - The current state of placed students (including temporary placements).
+         * @param {number} totalRows - Total rows in the layout.
+         * @param {number} totalCols - Total columns in the layout.
+         * @param {Array} rules - The array of avoid rules (e.g., [['김철수', '이영희']]).
+         * @returns {boolean} True if no rules are violated, false otherwise.
+         */
+        function checkAllAvoidRules(studentName, deskIndex, currentPlacement, totalRows, totalCols, rules) {
+            const row = Math.floor(deskIndex / totalCols);
+            const col = deskIndex % totalCols;
+
+            for (const rule of rules) {
+                const avoidStudent1 = rule[0];
+                const avoidStudent2 = rule[1];
+
+                // Check if the current student is part of this avoid rule
+                const isCurrentStudentRulePart = (studentName === avoidStudent1 || studentName === avoidStudent2);
+                if (!isCurrentStudentRulePart) continue; // If the student being checked is not part of this rule, skip.
+
+                // Determine the "partner" student in this rule
+                const partnerStudentName = (studentName === avoidStudent1) ? avoidStudent2 : avoidStudent1;
+
+                // Check surrounding desks (Up, Down, Left, Right)
+                const neighbors = [
+                    [row - 1, col], // Up
+                    [row + 1, col], // Down
+                    [row, col - 1], // Left
+                    [row, col + 1]  // Right
+                ];
+
+                for (const [nRow, nCol] of neighbors) {
+                    // Check if neighbor is within classroom bounds
+                    if (nRow >= 0 && nRow < totalRows && nCol >= 0 && nCol < totalCols) {
+                        const neighborDeskIndex = nRow * totalCols + nCol;
+                        const neighborStudent = currentPlacement[neighborDeskIndex]; // Get student at neighbor desk
+
+                        // If a neighbor student exists and is the "partner" student from the avoid rule
+                        if (neighborStudent && neighborStudent.name === partnerStudentName) {
+                            return false; // Rule violated
+                        }
+                    }
+                }
+            }
+            return true; // No rules violated
+        }
+
+
+        // --- Avoid Rules Management ---
+
+        /**
+         * Renders the current avoid rules in the settings panel.
+         */
+        function renderAvoidRules() {
+            avoidPairsContainer.innerHTML = '';
+            if (avoidRules.length === 0) {
+                avoidPairsContainer.innerHTML = '<p class="text-sm text-gray-500">피해야 할 학생 규칙이 없습니다.</p>';
+            }
+            avoidRules.forEach((pair, index) => {
+                const div = document.createElement('div');
+                div.classList.add('avoid-pair-item');
+                div.dataset.index = index;
+
+                const input1 = document.createElement('input');
+                input1.type = 'text';
+                input1.value = pair[0];
+                input1.placeholder = '학생 이름 1';
+                input1.classList.add('text-sm');
+                input1.addEventListener('input', (e) => {
+                    pair[0] = e.target.value.trim();
+                    saveData();
+                });
+
+                const span = document.createElement('span');
+                span.textContent = ' 과 ';
+                span.classList.add('text-gray-700');
+
+                const input2 = document.createElement('input');
+                input2.type = 'text';
+                input2.value = pair[1];
+                input2.placeholder = '학생 이름 2';
+                input2.classList.add('text-sm');
+                input2.addEventListener('input', (e) => {
+                    pair[1] = e.target.value.trim();
+                    saveData();
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.classList.add('btn-secondary', 'btn-delete-student'); // Added specific class for red delete button
+                deleteBtn.onclick = () => removeAvoidPair(index);
+
+                div.appendChild(input1);
+                div.appendChild(span);
+                div.appendChild(input2);
+                div.appendChild(deleteBtn);
+                avoidPairsContainer.appendChild(div);
+            });
+        }
+
+        /**
+         * Adds a new empty avoid rule pair.
+         */
+        function addAvoidPair() {
+            avoidRules.push(['', '']);
+            renderAvoidRules();
+            saveData();
+        }
+
+        /**
+         * Removes an avoid rule by its index.
+         * @param {number} index - The index of the rule to remove.
+         */
+        function removeAvoidPair(index) {
+            avoidRules.splice(index, 1);
+            renderAvoidRules();
+            saveData();
+        }
+
+
+        // --- Drag & Drop Handlers ---
+
+        /**
+         * Handles mouse down event on a desk. Initiates drag.
+         * @param {MouseEvent} e
+         */
+        function handleMouseDown(e) {
+            // Prevent drag if desk is inactive
+            const deskElement = e.target.closest('.desk');
+            const deskIndex = parseInt(deskElement.dataset.index);
+            if (deskAvailability[deskIndex] === 'inactive') {
+                e.preventDefault();
+                return;
+            }
+
+            // Only allow drag from occupied desks or their children
+            if (!e.target.classList.contains('occupied') && !e.target.closest('.occupied')) {
+                return;
+            }
+
+            // Prevent drag if a desk is currently focused for preference change (green border)
+            if (currentDeskForPreferenceChange !== null) {
+                e.preventDefault();
+                showMessageBox('자리 유형 설정 모드에서는 자리를 드래그할 수 없습니다. 모드를 해제하려면 빈 공간을 클릭하세요.', 3000);
+                return;
+            }
+
+            // Clear any preference focus (green border) if starting a drag
+            clearPreferenceFocus();
+
+
+            // Existing drag initiation logic
+            dragSrcDeskIndex = parseInt(deskElement.dataset.index);
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            isDragging = false; // Reset drag flag
+
+            dragGhost = document.createElement('div');
+            dragGhost.classList.add('drag-ghost');
+            dragGhost.style.width = deskElement.offsetWidth + 'px';
+            dragGhost.style.height = deskElement.offsetHeight + 'px';
+            dragGhost.innerHTML = deskElement.innerHTML; // Copy content (name, gender, etc.)
+            // Remove the delete button from the ghost to prevent accidental clicks
+            const ghostDeleteBtn = dragGhost.querySelector('.desk-delete-btn');
+            if(ghostDeleteBtn) ghostDeleteBtn.remove();
+
+            document.body.appendChild(dragGhost);
+
+            // Hide the original desk temporarily (visual feedback)
+            deskElement.classList.add('dragging');
+
+            document.addEventListener('mousemove', onDragging);
+            document.addEventListener('mouseup', onMouseUpGlobal);
+        }
+
+        /**
+         * Handles mouse move event during drag. Updates ghost position and drag-over class.
+         * @param {MouseEvent} e
+         */
+        function onDragging(e) {
+            // Check if movement exceeds threshold to confirm drag
+            if (!isDragging && (Math.abs(e.clientX - dragStartX) > dragThreshold || Math.abs(e.clientY - dragStartY) > dragThreshold)) {
+                isDragging = true;
+            }
+
+            if (dragGhost && isDragging) {
+                dragGhost.style.left = e.clientX - dragGhost.offsetWidth / 2 + 'px';
+                dragGhost.style.top = e.clientY - dragGhost.offsetHeight / 2 + 'px';
+
+                // Remove drag-over from all desks
+                document.querySelectorAll('.desk').forEach(desk => {
+                    desk.classList.remove('drag-over');
+                });
+
+                // Find the desk element currently under the ghost
+                const targetElement = document.elementFromPoint(e.clientX, e.clientY);
+                const targetDesk = targetElement ? targetElement.closest('.desk') : null;
+
+                // Apply drag-over only if it's an active desk and not the source desk
+                if (targetDesk && targetDesk.dataset.index !== String(dragSrcDeskIndex) && 
+                    deskAvailability[parseInt(targetDesk.dataset.index)] === 'active') {
+                    targetDesk.classList.add('drag-over');
+                }
+            }
+        }
+
+        /**
+         * Handles mouse up event globally. Ends drag operation.
+         * @param {MouseEvent} e
+         */
+        function onMouseUpGlobal(e) {
+            document.removeEventListener('mousemove', onDragging);
+            document.removeEventListener('mouseup', onMouseUpGlobal);
+
+            if (dragGhost) {
+                dragGhost.remove();
+                dragGhost = null;
+            }
+
+            // Restore opacity and remove dragging class from source desk
+            const sourceDeskElement = document.querySelector(`.desk[data-index="${dragSrcDeskIndex}"]`);
+            if (sourceDeskElement) {
+                sourceDeskElement.classList.remove('dragging');
+            }
+
+            // Remove drag-over class from all desks
+            document.querySelectorAll('.desk').forEach(desk => {
+                desk.classList.remove('drag-over');
+            });
+
+            // If it was a drag operation (not just a click)
+            if (isDragging) {
+                const targetElement = document.elementFromPoint(e.clientX, e.clientY);
+                const targetDeskElement = targetElement ? targetElement.closest('.desk') : null;
+                if (targetDeskElement) {
+                    const targetDeskIndex = parseInt(targetDeskElement.dataset.index);
+                    // Perform drop only if the target is an active desk and not the source desk itself
+                    if (deskAvailability[targetDeskIndex] === 'active' && targetDeskIndex !== dragSrcDeskIndex) {
+                        drop(dragSrcDeskIndex, targetDeskIndex);
+                    } else {
+                        // If not a valid drop target, show message and revert
+                        if (targetDeskIndex === dragSrcDeskIndex) {
+                            showMessageBox('동일한 자리에는 옮길 수 없습니다.', 1500);
+                        } else if (deskAvailability[targetDeskIndex] === 'inactive') {
+                            showMessageBox('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000);
+                        }
+                    }
+                } else {
+                    showMessageBox('자리에 놓아야 합니다.', 1500);
+                }
+            }
+            dragSrcDeskIndex = null;
+            isDragging = false; // Reset drag flag
+        }
+
+
+        /**
+         * Handles click event on a desk. Toggles general activation OR sets desk type.
+         * @param {MouseEvent} e
+         */
+        function handleDeskClick(e) {
+            // Check if the click originated from within the desk options overlay itself
+            // If so, we don't want to process it as a desk click to avoid double-handling or closing.
+            if (e.target.closest('.desk-options-overlay')) {
+                return;
+            }
+
+            const deskElement = e.target.closest('.desk');
+            const deskIndex = parseInt(deskElement.dataset.index);
+            
+            // If desk is inactive (deleted), prevent any interaction beyond its own restore button
+            if (deskAvailability[deskIndex] === 'inactive') {
+                e.preventDefault();
+                return;
+            }
+
+            // If a drag operation just finished or is in progress, prevent a click event from being processed.
+            if (isDragging) { 
+                return; 
+            }
+            
+            if (currentDeskForPreferenceChange === deskIndex) {
+                // If the same desk is clicked again while it's already focused for preference change (green border),
+                // it means user wants to de-focus it and hide the overlay.
+                clearPreferenceFocus(); 
+            } else {
+                // If a different desk is clicked, or no desk was focused:
+                // Clear any previous focus first
+                clearPreferenceFocus(); 
+                // Set new focus
+                deskElement.classList.add('preference-focused');
+                currentDeskForPreferenceChange = deskIndex;
+                showDeskOptionsOverlay(deskElement);
+            }
+            saveData(); // Save updated states
+        }
+
+        // Add a global click listener to hide the overlay and clear focus if clicked outside
+        document.addEventListener('click', (e) => {
+            // Check if the click target is NOT a desk, NOT inside the desk options overlay, and NOT the tutorial or message box
+            const isClickOutsideDeskAndOverlay = !e.target.closest('.desk') && 
+                                                !e.target.closest('.desk-options-overlay') &&
+                                                !e.target.closest('.tutorial-message-box') &&
+                                                !e.target.closest('.message-box') &&
+                                                !e.target.closest('.data-management-modal'); // Exclude data management modal
+            
+            if (isClickOutsideDeskAndOverlay) {
+                clearPreferenceFocus(); // Clear green highlight and hide overlay
+                hideDataManagementModal(); // Also hide data management modal if clicked outside
+            }
+        });
+
+
+        /**
+         * Performs the actual swap of students between two desks.
+         * @param {number} sourceIndex - Index of the source desk.
+         * @param {number} targetIndex - Index of the target desk.
+         */
+        function drop(sourceIndex, targetIndex) {
+            const student1 = placedStudents[sourceIndex];
+            const student2 = placedStudents[targetIndex];
+
+            // Prevent drop if target is inactive
+            if (deskAvailability[targetIndex] === 'inactive') {
+                showMessageBox('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000);
+                return;
+            }
+
+            // Temporarily swap to check rules
+            const tempPlacement = [...placedStudents];
+            tempPlacement[sourceIndex] = student2;
+            tempPlacement[targetIndex] = student1;
+
+            let swapAllowed = true;
+            let violationMessage = '';
+
+            // Check avoid rules for student1 at targetIndex
+            if (student1 && !checkAllAvoidRules(student1.name, targetIndex, tempPlacement, rows, cols, avoidRules)) {
+                swapAllowed = false;
+                violationMessage = `${student1.name}을(를) #${targetIndex + 1} 자리에 배치하면 피해야 할 학생 규칙에 위배됩니다.`;
+            }
+            // Check avoid rules for student2 at sourceIndex (only if student2 exists)
+            if (swapAllowed && student2 && !checkAllAvoidRules(student2.name, sourceIndex, tempPlacement, rows, cols, avoidRules)) {
+                swapAllowed = false;
+                violationMessage = `${student2.name}을(를) #${sourceIndex + 1} 자리에 배치하면 피해야 할 학생 규칙에 위배됩니다.`;
+            }
+
+            // Check if dropped student's gender matches target desk's preference (if not 'random')
+            const targetDeskPreference = deskGenderPreferences[targetIndex] || 'random';
+            if (swapAllowed && student1 && targetDeskPreference !== 'random' && student1.gender !== '무' && student1.gender !== targetDeskPreference.charAt(0)) {
+                if ((targetDeskPreference === 'male' && student1.gender === '여') ||
+                    (targetDeskPreference === 'female' && student1.gender === '남')) {
+                    showMessageBox(`${student1.name}은(는) ${targetDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${targetIndex + 1}에 적합하지 않습니다.`, 3000);
+                }
+            }
+             // Check if swapped-out student's gender matches source desk's preference (if not 'random')
+             const sourceDeskPreference = deskGenderPreferences[sourceIndex] || 'random';
+             if (swapAllowed && student2 && sourceDeskPreference !== 'random' && student2.gender !== '무' && student2.gender !== sourceDeskPreference.charAt(0)) {
+                 if ((sourceDeskPreference === 'male' && student2.gender === '여') ||
+                     (sourceDeskPreference === 'female' && student2.gender === '남')) {
+                     showMessageBox(`${student2.name}은(는) ${sourceDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${sourceIndex + 1}에 적합하지 않습니다.`, 3000);
+                 }
+             }
+
+
+            if (swapAllowed) {
+                placedStudents[sourceIndex] = student2;
+                placedStudents[targetIndex] = student1;
+                updateDeskVisuals();
+                saveData(); // Save the new placement
+                showMessageBox('자리가 성공적으로 변경되었습니다!', 1000);
+            } else {
+                showMessageBox(`자리 변경 불가: ${violationMessage}`, 3000);
+            }
+        }
+
+        // --- Event Listeners for Input Changes (Auto-save) ---
+        rowsInput.addEventListener('input', saveData);
+        colsInput.addEventListener('input', saveData);
+        
+        // --- Initialize on Load ---
+        window.onload = function() {
+            initDeskOptionsOverlayButtons(); // Setup overlay button listeners
+            loadData(); // Attempt to load data first
+            if (studentData.length === 0) { // If no students loaded, add a default empty row
+                addStudentRow();
+            }
+        };
+    </script>
+</body>
+</html>
