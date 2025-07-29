@@ -476,6 +476,38 @@
             fill: #64748b;
         }
 
+        /* New styles for tooltips */
+        .icon-button-container {
+            position: relative;
+            display: flex; /* To allow centering and relative positioning of tooltip */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .icon-button-tooltip {
+            position: absolute;
+            top: 100%; /* Position below the button */
+            margin-top: 5px; /* Spacing from the button */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(49, 57, 72, 0.9); /* Dark background */
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem; /* Smaller text */
+            white-space: nowrap; /* Prevent text wrapping */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            pointer-events: none; /* Crucial: allows clicking through the tooltip to the button */
+            z-index: 500; /* Ensure it's above other elements but below modals */
+        }
+
+        .icon-button-container:hover .icon-button-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* Desk Options Overlay */
         .desk-options-overlay {
             position: absolute;
@@ -548,17 +580,23 @@
             <div class="header-buttons">
                 <button onclick="showTutorialMessageBox()" class="btn-secondary">튜토리얼</button>
                 <!-- Toggle button for Avoid Settings Panel -->
-                <button onclick="toggleAvoidSettings()" class="settings-icon-button">
-                    <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill-rule="evenodd" d="M11.078 2.29c.47-.1.97-.1 1.442 0l.21.04a1 1 0 01.62.62l.04.21c.174.836.852 1.514 1.688 1.688l.21.04a1 1 0 01.62.62l.04.21c.1.47.1 1.012 0 1.482l-.04.21a1 1 0 01-.62.62l-.21.04c-.836.174-1.514.852-1.688-1.688l-.04.21a1 1 0 01-.62.62l-.21.04c-.47.1-.97.1-1.442 0l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.174-.836-.852-1.514-1.688-1.688l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.1-.47-.1-1.012 0-1.482l.04-.21a1 1 0 01.62-.62l.21-.04c.836-.174 1.514-.852 1.688-1.688l.04-.21a1 1 0 01.62-.62l.21-.04zM12 15a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                <div class="icon-button-container">
+                    <button onclick="toggleAvoidSettings()" class="settings-icon-button">
+                        <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.078 2.29c.47-.1.97-.1 1.442 0l.21.04a1 1 0 01.62.62l.04.21c.174.836.852 1.514 1.688 1.688l.21.04a1 1 0 01.62.62l.04.21c.1.47.1 1.012 0 1.482l-.04.21a1 1 0 01-.62.62l-.21.04c-.836.174-1.514.852-1.688-1.688l-.04.21a1 1 0 01-.62.62l-.21.04c-.47.1-.97.1-1.442 0l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.174-.836-.852-1.514-1.688-1.688l-.21-.04a1 1 0 01-.62-.62l-.04-.21c-.1-.47-.1-1.012 0-1.482l.04-.21a1 1 0 01.62-.62l.21-.04c.836-.174 1.514-.852 1.688-1.688l.04-.21a1 1 0 01.62-.62l.21-.04zM12 15a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <span class="icon-button-tooltip">설정</span>
+                </div>
                 <!-- Toggle button for Snapshot History Panel -->
-                <button onclick="toggleSnapshotHistoryPanel()" class="settings-icon-button">
-                    <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3.792 2.938A49.069 49.069 0 0112 5.375c2.73 0 5.413.407 8.08.914a.75.75 0 01.57.842V19.08c-.01.12-.036.237-.077.35l-2.544 6.78a1.5 1.5 0 01-1.265.91c-.487.054-.978.125-1.47.214a49.027 49.027 0 01-11.082 0c-.492-.089-.983-.16-1.47-.214a1.5 1.5 0 01-1.265-.91L2.247 19.43a.75.75 0 01-.077-.35V9.124a.75.75 0 01.57-.842c2.667-.507 5.35-.914 8.08-.914zM12 11.25a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                <div class="icon-button-container">
+                    <button onclick="toggleSnapshotHistoryPanel()" class="settings-icon-button">
+                        <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.792 2.938A49.069 49.069 0 0112 5.375c2.73 0 5.413.407 8.08.914a.75.75 0 01.57.842V19.08c-.01.12-.036.237-.077.35l-2.544 6.78a1.5 1.5 0 01-1.265.91c-.487.054-.978.125-1.47.214a49.027 49.027 0 01-11.082 0c-.492-.089-.983-.16-1.47-.214a1.5 1.5 0 01-1.265-.91L2.247 19.43a.75.75 0 01-.077-.35V9.124a.75.75 0 01.57-.842c2.667-.507 5.35-.914 8.08-.914zM12 11.25a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <span class="icon-button-tooltip">데이터 관리</span>
+                </div>
             </div>
         </div>
 
@@ -655,7 +693,7 @@
         <ol>
             <li><strong>자리 배치 생성:</strong> '행 수'와 '열 수'를 입력하고 '자리 배치 생성' 버튼을 클릭하세요.</li>
             <li><strong>학생 목록 입력:</strong> '+ 학생 추가' 버튼으로 학생을 추가하고 이름과 성별을 설정합니다.</li>
-            <li><strong>자리 유형 설정:</strong> 자리를 클릭하면 나타나는 메뉴에서 '남학생', '여학생', '랜덤' 중 하나를 선택하여 자리 유형을 설정합니다.
+            <li><strong>자리 유형 설정:</strong> 자리에 마우스를 올리면 나타나는 메뉴에서 '남학생', '여학생', '랜덤' 중 하나를 선택하여 자리 유형을 설정합니다.
                 <ul>
                     <li><strong>노란색</strong>: 랜덤 자리 (모든 성별 가능)</li>
                     <li><strong>파란색</strong>: 남학생 자리 (남학생만 가능)</li>
@@ -663,8 +701,8 @@
                 </ul>
             </li>
             <li><strong>자리 삭제 및 복구:</strong> 자리 메뉴에서 '자리 삭제'를 선택하거나, 자리에 마우스를 올렸을 때 나타나는 'X' 버튼을 눌러 자리를 삭제할 수 있습니다. 삭제된 자리는 '회색'으로 표시되며, '복구' 버튼으로 되돌릴 수 있습니다.</li>
-            <li><strong>피해야 할 학생 설정:</strong> 오른쪽 상단의 톱니바퀴 버튼을 클릭하여 '피해야 할 학생 설정' 패널을 열고, 함께 앉으면 안 되는 학생들을 지정합니다.</li>
-            <li><strong>스냅샷 목록:</strong> 오른쪽 상단의 목록 아이콘을 클릭하여 '스냅샷 목록' 패널을 열 수 있습니다.</li>
+            <li><strong>피해야 할 학생 설정:</strong> 오른쪽 상단의 톱니바퀴 버튼에 마우스를 올리면 '설정' 툴팁이 나타납니다. 클릭하여 '피해야 할 학생 설정' 패널을 열고, 함께 앉으면 안 되는 학생들을 지정합니다.</li>
+            <li><strong>스냅샷 목록:</strong> 오른쪽 상단의 목록 아이콘에 마우스를 올리면 '데이터 관리' 툴팁이 나타납니다. 클릭하여 '스냅샷 목록' 패널을 열 수 있습니다.</li>
             <li><strong>스냅샷 저장:</strong> '스냅샷 목록' 패널에서 이름을 입력하고 '저장' 버튼을 클릭하여 현재 상태를 스냅샷으로 저장할 수 있습니다. 이름이 없으면 자동으로 날짜와 시간이 기록됩니다.</li>
             <li><strong>스냅샷 불러오기 및 삭제:</strong> '스냅샷 목록'에서 저장된 스냅샷들을 확인하고, '불러오기'나 '삭제' 버튼을 통해 관리할 수 있습니다.</li>
             <li><strong>자리 바꾸기:</strong> '자리 바꾸기' 버튼을 클릭하면 학생들이 모든 자리 유형과 피해야 할 학생 규칙을 고려하여 무작위로 배치됩니다.</li>
@@ -714,6 +752,9 @@
         let savedSnapshots = []; // Array to hold multiple saved states (snapshots)
         const MAX_SNAPSHOTS = 10; // Limit the number of saved snapshots
 
+        let hoverTimeoutId = null; // Timeout for desk hover leave (to debounce closing overlay)
+        let layoutMessageTimeoutId = null; // Timeout for layout messages
+
 
         // --- Local Storage Management ---
 
@@ -762,7 +803,7 @@
                 applyDeskAvailabilityVisuals();
                 renderAvoidRules();
 
-                showMessageBox('이전 작업 상태가 로드되었습니다.', 2000);
+                updateLayoutMessage('이전 작업 상태가 로드되었습니다.', 2000); // Changed to layoutMessage
 
             } else {
                 // If no current state saved, initialize with defaults and generate layout
@@ -811,7 +852,7 @@
             
             savedSnapshots = existingSnapshots; // Update global array
             renderSnapshotList();
-            showMessageBox('현재 상태가 스냅샷으로 저장되었습니다!', 1500);
+            updateLayoutMessage('현재 상태가 스냅샷으로 저장되었습니다!', 1500); // Changed to layoutMessage
             snapshotNameInput.value = ''; // Clear input
         }
 
@@ -846,9 +887,9 @@
                 renderAvoidRules();
                 saveData(); // Save the loaded state as the new current working state
 
-                showMessageBox(`'${snapshotToLoad.name}' 스냅샷을 불러왔습니다.`, 2000);
+                updateLayoutMessage(`'${snapshotToLoad.name}' 스냅샷을 불러왔습니다.`, 2000); // Changed to layoutMessage
             } else {
-                showMessageBox('선택된 스냅샷을 찾을 수 없습니다.', 2000);
+                showMessageBox('선택된 스냅샷을 찾을 수 없습니다.', 2000); // This is a more critical error, keep as MessageBox
             }
         }
 
@@ -863,7 +904,7 @@
             
             savedSnapshots = snapshots; // Update global array
             renderSnapshotList();
-            showMessageBox('스냅샷이 삭제되었습니다.', 1000);
+            updateLayoutMessage('스냅샷이 삭제되었습니다.', 1000); // Changed to layoutMessage
         }
 
         /**
@@ -919,7 +960,7 @@
         // --- UI Interactions ---
 
         /**
-         * Displays a custom message box.
+         * Displays a custom message box (for critical alerts).
          * @param {string} message - The message to display.
          * @param {number} [duration=0] - Duration in ms before hiding. 0 means manual close.
          */
@@ -937,6 +978,22 @@
         function hideMessageBox() {
             messageBox.style.display = 'none';
         }
+
+        /**
+         * Updates the text message below the classroom layout.
+         * @param {string} message - The message to display.
+         * @param {number} [duration=0] - Duration in ms before clearing. 0 means manual clear (or until next message).
+         */
+        function updateLayoutMessage(message, duration = 0) {
+            layoutMessage.textContent = message;
+            clearTimeout(layoutMessageTimeoutId);
+            if (duration > 0) {
+                layoutMessageTimeoutId = setTimeout(() => {
+                    layoutMessage.textContent = ''; // Clear message after duration
+                }, duration);
+            }
+        }
+
 
         /**
          * Shows the tutorial message box.
@@ -1040,17 +1097,17 @@
          */
         function applyDeskTypeFromOverlay(mode) {
             if (currentDeskForPreferenceChange === null) {
-                showMessageBox('먼저 자리를 선택해주세요.', 1500);
+                // This case should ideally not happen with hover, but good for robustness
                 return;
             }
 
             if (mode === 'delete') {
                 removeDesk(currentDeskForPreferenceChange);
-                showMessageBox(`${currentDeskForPreferenceChange + 1}번 자리가 삭제되었습니다.`, 1500);
+                updateLayoutMessage(`${currentDeskForPreferenceChange + 1}번 자리가 삭제되었습니다.`, 1500); // Changed to layoutMessage
             } else {
                 deskGenderPreferences[currentDeskForPreferenceChange] = mode;
                 applyDeskGenderPreferencesVisuals(); 
-                showMessageBox(`${currentDeskForPreferenceChange + 1}번 자리 유형이 '${mode === 'random' ? '랜덤' : mode === 'male' ? '남학생' : '여학생'}'으로 설정되었습니다.`, 1500);
+                updateLayoutMessage(`${currentDeskForPreferenceChange + 1}번 자리 유형이 '${mode === 'random' ? '랜덤' : mode === 'male' ? '남학생' : '여학생'}'으로 설정되었습니다.`, 1500); // Changed to layoutMessage
             }
 
             clearPreferenceFocus(); // Clear the green highlight and hide overlay
@@ -1213,7 +1270,7 @@
 
             classroomLayoutDiv.innerHTML = '';
             classroomLayoutDiv.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            layoutMessage.textContent = `${rows}행 ${cols}열의 자리 배치도가 생성되었습니다.`;
+            updateLayoutMessage(`${rows}행 ${cols}열의 자리 배치도가 생성되었습니다.`, 2000); // Changed to layoutMessage
 
             const totalDesks = rows * cols;
             // Only reset placedStudents and preferences/availability if generating a completely new layout
@@ -1265,8 +1322,10 @@
                 // The text and onclick will be set by applyDeskAvailabilityVisuals
                 desk.appendChild(deleteBtn);
 
-                desk.addEventListener('mousedown', handleMouseDown);
-                desk.addEventListener('click', handleDeskClick);
+                // Change: Use mouseenter/mouseleave for overlay
+                desk.addEventListener('mouseenter', handleDeskHoverEnter);
+                desk.addEventListener('mouseleave', handleDeskHoverLeave);
+                desk.addEventListener('mousedown', handleMouseDown); // Keep mousedown for drag
 
                 classroomLayoutDiv.appendChild(desk);
             }
@@ -1290,7 +1349,7 @@
             // Reset layout and all desk-related data
             generateLayout(true); 
 
-            showMessageBox('모든 설정 및 배치가 초기화되었습니다.', 2000);
+            updateLayoutMessage('모든 설정 및 배치가 초기화되었습니다.', 2000); // Changed to layoutMessage
             saveData();
         }
 
@@ -1402,7 +1461,7 @@
             applyDeskAvailabilityVisuals(); // Update visual to inactive
             updateDeskVisuals(); // Remove student visual
 
-            showMessageBox(`${index + 1}번 자리가 삭제(비활성화)되었습니다.`, 1500);
+            updateLayoutMessage(`${index + 1}번 자리가 삭제(비활성화)되었습니다.`, 1500); // Changed to layoutMessage
             saveData();
         }
 
@@ -1418,7 +1477,7 @@
             applyDeskAvailabilityVisuals(); // Update visual to active
             updateDeskVisuals(); // Update to empty state
 
-            showMessageBox(`${index + 1}번 자리가 복구(활성화)되었습니다.`, 1500);
+            updateLayoutMessage(`${index + 1}번 자리가 복구(활성화)되었습니다.`, 1500); // Changed to layoutMessage
             saveData();
         }
 
@@ -1563,7 +1622,7 @@
 
             // --- Finalize and update UI ---
             if (shuffleSuccessful) {
-                showMessageBox('자리 배치가 완료되었습니다!', 1500);
+                updateLayoutMessage('자리 배치가 완료되었습니다!', 1500); // Changed to layoutMessage
             } else {
                 // If shuffle failed, clear all students from active desks to reflect no valid placement
                 for(let i = 0; i < totalDesks; i++) {
@@ -1571,7 +1630,7 @@
                         placedStudents[i] = null;
                     }
                 }
-                showMessageBox('모든 규칙을 만족하는 자리 배치를 찾을 수 없습니다. 피해야 할 학생 규칙을 줄이거나 학생 목록/자리 유형을 조정해주세요.', 5000);
+                showMessageBox('모든 규칙을 만족하는 자리 배치를 찾을 수 없습니다. 피해야 할 학생 규칙을 줄이거나 학생 목록/자리 유형을 조정해주세요.', 5000); // Critical message, keep as MessageBox
             }
 
             updateDeskVisuals(); // Update UI with the final placement (or cleared state)
@@ -1836,13 +1895,13 @@
                     } else {
                         // If not a valid drop target, show message and revert
                         if (targetDeskIndex === dragSrcDeskIndex) {
-                            showMessageBox('동일한 자리에는 옮길 수 없습니다.', 1500);
+                            updateLayoutMessage('동일한 자리에는 옮길 수 없습니다.', 1500); // Changed to layoutMessage
                         } else if (deskAvailability[targetDeskIndex] === 'inactive') {
-                            showMessageBox('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000);
+                            updateLayoutMessage('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000); // Changed to layoutMessage
                         }
                     }
                 } else {
-                    showMessageBox('자리에 놓아야 합니다.', 1500);
+                    updateLayoutMessage('자리에 놓아야 합니다.', 1500); // Changed to layoutMessage
                 }
             }
             dragSrcDeskIndex = null;
@@ -1851,60 +1910,93 @@
 
 
         /**
-         * Handles click event on a desk. Toggles general activation OR sets desk type.
+         * Handles mouseenter event on a desk. Shows preference focus and overlay.
          * @param {MouseEvent} e
          */
-        function handleDeskClick(e) {
-            // Check if the click originated from within the desk options overlay itself
-            // If so, we don't want to process it as a desk click to avoid double-handling or closing.
-            if (e.target.closest('.desk-options-overlay')) {
-                return;
-            }
+        function handleDeskHoverEnter(e) {
+            clearTimeout(hoverTimeoutId); // Clear any pending hide
+            if (isDragging) return; // Don't show overlay if dragging is active
 
-            const deskElement = e.target.closest('.desk');
+            const deskElement = e.currentTarget;
             const deskIndex = parseInt(deskElement.dataset.index);
-            
-            // If desk is inactive (deleted), prevent any interaction beyond its own restore button
-            if (deskAvailability[deskIndex] === 'inactive') {
-                e.preventDefault();
-                return;
+
+            if (deskAvailability[deskIndex] === 'inactive') return; // No overlay for inactive desks
+
+            // If already showing for this desk, do nothing
+            if (currentDeskForPreferenceChange === deskIndex) return;
+
+            // If we're hovering over a new desk, clear old focus first
+            if (currentDeskForPreferenceChange !== null) {
+                clearPreferenceFocus();
             }
 
-            // If a drag operation just finished or is in progress, prevent a click event from being processed.
-            if (isDragging) { 
-                return; 
-            }
-            
-            if (currentDeskForPreferenceChange === deskIndex) {
-                // If the same desk is clicked again while it's already focused for preference change (green border),
-                // it means user wants to de-focus it and hide the overlay.
-                clearPreferenceFocus(); 
-            } else {
-                // If a different desk is clicked, or no desk was focused:
-                // Clear any previous focus first
-                clearPreferenceFocus(); 
-                // Set new focus
-                deskElement.classList.add('preference-focused');
-                currentDeskForPreferenceChange = deskIndex;
-                showDeskOptionsOverlay(deskElement);
-            }
-            saveData(); // Save updated states
+            deskElement.classList.add('preference-focused');
+            currentDeskForPreferenceChange = deskIndex;
+            showDeskOptionsOverlay(deskElement);
         }
 
-        // Add a global click listener to hide the overlay and clear focus if clicked outside
+        /**
+         * Handles mouseleave event from a desk. Schedules hide of preference focus and overlay.
+         * @param {MouseEvent} e
+         */
+        function handleDeskHoverLeave(e) {
+            // If moving to the overlay itself, attach a listener to the overlay to keep it open
+            if (e.relatedTarget && e.relatedTarget.closest('#deskOptionsOverlay') === deskOptionsOverlay) {
+                deskOptionsOverlay.addEventListener('mouseleave', handleOverlayLeave);
+                return;
+            }
+
+            // Otherwise, set a timeout to hide if not re-entering desk or moving to overlay
+            hoverTimeoutId = setTimeout(() => {
+                clearPreferenceFocus(); // Clear after a short delay
+            }, 100); // Small delay to prevent accidental flicker
+        }
+
+        /**
+         * Handles mouseleave event from the desk options overlay. Clears focus and hides.
+         * @param {MouseEvent} e
+         */
+        function handleOverlayLeave(e) {
+            // If moving back to a desk, or staying within the overlay
+            if (e.relatedTarget && (e.relatedTarget.closest('.desk') || e.relatedTarget.closest('#deskOptionsOverlay') === deskOptionsOverlay)) {
+                // Do nothing, a new hover enter will handle it or it stays in overlay
+            } else {
+                // Mouse left overlay to somewhere else, clear focus and hide
+                clearPreferenceFocus();
+            }
+            deskOptionsOverlay.removeEventListener('mouseleave', handleOverlayLeave); // Clean up
+        }
+
+        /**
+         * Handles general click event on a desk. This is distinct from hover logic.
+         * This function should primarily be for *clicking* an option within the overlay, not triggering the overlay itself.
+         * Original logic of `handleDeskClick` is now split between `handleDeskHoverEnter` for showing overlay and `click` on overlay buttons for actions.
+         * I'm renaming the old `handleDeskClick` to `_handleDeskClickInternal` and ensuring it's not actually attached
+         * to desk elements directly anymore, as hover is now the trigger for overlay.
+         */
+        function _handleDeskClickInternal(e) {
+            // This function is no longer directly attached to desks for opening the overlay.
+            // It remains here to show its previous content, but it should not be called by desk clicks.
+            // Desk clicks are now primarily handled by mousedown (for drag) and hover (for overlay).
+            console.log("Desk clicked (internal handler).");
+            // Original `handleDeskClick` content would go here if needed for *actual* clicks on the desk for other purposes.
+        }
+
+
+        // Add a global click listener to hide panels if clicked outside
         document.addEventListener('click', (e) => {
             // Check if the click target is NOT a desk, NOT inside the desk options overlay, and NOT the tutorial or message box
-            const isClickOutsideDeskAndOverlay = !e.target.closest('.desk') && 
-                                                !e.target.closest('.desk-options-overlay') &&
-                                                !e.target.closest('.tutorial-message-box') &&
-                                                !e.target.closest('.message-box') &&
-                                                !e.target.closest('#avoidSettingsPanel') && // Exclude avoid settings panel
-                                                !e.target.closest('#snapshotHistoryPanel') && // Exclude snapshot history panel
-                                                !e.target.closest('.header-buttons'); // Exclude header buttons that toggle panels
+            const isClickOutsidePanelsAndOverlays = !e.target.closest('#avoidSettingsPanel') &&
+                                                    !e.target.closest('.settings-icon-button') && // Exclude setting icon button
+                                                    !e.target.closest('#snapshotHistoryPanel') &&
+                                                    !e.target.closest('.icon-button-container') && // Exclude snapshot icon button
+                                                    !e.target.closest('.tutorial-message-box') &&
+                                                    !e.target.closest('.message-box') &&
+                                                    !e.target.closest('.desk-options-overlay') && // Exclude desk options overlay
+                                                    !e.target.closest('.desk'); // Exclude desk itself (handled by hover/mousedown)
             
-            if (isClickOutsideDeskAndOverlay) {
-                clearPreferenceFocus(); // Clear green highlight and hide overlay
-                // Hide panels if click is outside all relevant elements and their toggle buttons
+            if (isClickOutsidePanelsAndOverlays) {
+                // Only hide panels, not desk-related overlays handled by hover
                 if (!avoidSettingsPanel.classList.contains('hidden')) {
                     avoidSettingsPanel.classList.add('hidden');
                 }
@@ -1926,7 +2018,7 @@
 
             // Prevent drop if target is inactive
             if (deskAvailability[targetIndex] === 'inactive') {
-                showMessageBox('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000);
+                updateLayoutMessage('삭제된 자리에는 학생을 옮길 수 없습니다.', 2000); // Changed to layoutMessage
                 return;
             }
 
@@ -1954,7 +2046,7 @@
             if (swapAllowed && student1 && targetDeskPreference !== 'random' && student1.gender !== '무' && student1.gender !== targetDeskPreference.charAt(0)) {
                 if ((targetDeskPreference === 'male' && student1.gender === '여') ||
                     (targetDeskPreference === 'female' && student1.gender === '남')) {
-                    showMessageBox(`${student1.name}은(는) ${targetDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${targetIndex + 1}에 적합하지 않습니다.`, 3000);
+                    updateLayoutMessage(`${student1.name}은(는) ${targetDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${targetIndex + 1}에 적합하지 않습니다.`, 3000); // Changed to layoutMessage
                 }
             }
              // Check if swapped-out student's gender matches source desk's preference (if not 'random')
@@ -1962,7 +2054,7 @@
              if (swapAllowed && student2 && sourceDeskPreference !== 'random' && student2.gender !== '무' && student2.gender !== sourceDeskPreference.charAt(0)) {
                  if ((sourceDeskPreference === 'male' && student2.gender === '여') ||
                      (sourceDeskPreference === 'female' && student2.gender === '남')) {
-                     showMessageBox(`${student2.name}은(는) ${sourceDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${sourceIndex + 1}에 적합하지 않습니다.`, 3000);
+                     updateLayoutMessage(`${student2.name}은(는) ${sourceDeskPreference === 'male' ? '남학생' : '여학생'} 자리인 #${sourceIndex + 1}에 적합하지 않습니다.`, 3000); // Changed to layoutMessage
                  }
              }
 
@@ -1972,9 +2064,9 @@
                 placedStudents[targetIndex] = student1;
                 updateDeskVisuals();
                 saveData(); // Save the new placement
-                showMessageBox('자리가 성공적으로 변경되었습니다!', 1000);
+                updateLayoutMessage('자리가 성공적으로 변경되었습니다!', 1000); // Changed to layoutMessage
             } else {
-                showMessageBox(`자리 변경 불가: ${violationMessage}`, 3000);
+                showMessageBox(`자리 변경 불가: ${violationMessage}`, 3000); // Critical message, keep as MessageBox
             }
         }
 
